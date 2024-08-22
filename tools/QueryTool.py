@@ -11,6 +11,18 @@ load_dotenv(override=True)
 
 CONNECTION_STRING = os.getenv('PG_CONNECTION_STRING')
 
+"""
+JSON VOTE OBJECT
+{
+    "vote": {
+        "name": "Kyanize",
+        "vote": true,
+        "comments": "blah blah blah",
+        "timestamp": 05-05-2015T05:05:05PM
+    }
+}
+"""
+
 
 class QueryTool:
     def __init__(self) -> None:
@@ -18,7 +30,7 @@ class QueryTool:
         QueryTool constructor
         return: None
         """
-        self.logger = Functions.create_logger('tools')
+        self.logger = Functions.create_logger('querytool')
         self.pool = None
 
     async def __aenter__(self) -> 'QueryTool':
@@ -83,16 +95,49 @@ class QueryTool:
             self.logger.error(f'Error fetching value -> {e}', exc_info=True)
             raise
 
+    async def create_voting_period(self) -> None:
+        pass
+    
+    async def submit_vote(self) -> None:
+        pass
 
+    async def get_voting_period(self) -> list:
+        pass
+    
+    async def get_vote(self) -> list:
+        pass
 
-    async def delete_submission(self, uuid_no: uuid.UUID) -> None:
+    async def delete_voting_period(self, id: int) -> None:
         """
-        Deletes submission from database.
-        param uuid_no: str - UUID of task
+        Delete voting period from database.
+        param id: int - id # of task
         return: None
         """
-        query = 'DELETE FROM submissions WHERE uuid_no = $1;'
-        self.logger.info(f'Delete submission query -> {query}')
-        self.logger.info(f'UUID number -> {uuid_no}')
-        await self.execute(query, uuid_no)
-        self.logger.info('Submission deleted.')
+        query = 'DELETE FROM current_votes WHERE id = $1;'
+        self.logger.info(f'Delete voting period query -> {query}')
+        self.logger.info(f'--ID number -> {id}')
+        await self.execute(query, id)
+        self.logger.info('Voting period deleted.')
+
+    async def delete_vote(self, id: int, name: str) -> None:
+        """
+        Deletes specific vote.
+        param id: int - id # of period
+        return: None
+        """
+        query = """
+        WITH updated_votes AS (
+            SELECT id, array_remove(votes, elem) AS new_votes
+            FROM current_votes, unnest(votes) AS elem
+            WHERE id = $1 AND elem->'vote'->>'name' = $2
+            )
+        UPDATE current_votes
+        SET votes = updated_votes.new_votes
+        FROM updated_votes
+        WHERE current_votes.id = updated_votes.id;
+        """
+        self.logger.info(f'Delete vote query -> {query}')
+        self.logger.info(f'--ID number -> {id}')
+        self.logger.info(f'--Name -> {name}')
+        await self.execute(query, id, name)
+        self.logger.info('Vote deleted.')

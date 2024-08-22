@@ -5,7 +5,7 @@ CREATE TABLE current_votes (
     id SERIAL PRIMARY KEY,
     nominee VARCHAR(100),
     members VARCHAR(100)[] NOT NULL,
-    votes JSONB NOT NULL
+    votes JSONB[] NOT NULL
 );
 
 

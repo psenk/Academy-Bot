@@ -46,7 +46,7 @@ bot_logger.setLevel(logging.DEBUG)
 async def avote(interaction: discord.Interaction, vote: int) -> None:
     """
     Submit a choice in an Academy vote.
-    param vote: name of voting period
+    param vote: int - choice of voting period
     return: None
     """
     
@@ -95,9 +95,9 @@ async def acreate(interaction: discord.Interaction, vote: str, description: str,
     """
     Create a voting period.
     param interaction: Discord Interaction instance
-    param vote: str, name of voting period
-    param description: str, description of voting period
-    param period: int, optional, set length of time of vote, default two weeks
+    param vote: str - name of voting period
+    param description: str - description of voting period
+    param period: int - optional, set length of time of vote, default two weeks
     return: None
     """
     pass
@@ -112,8 +112,8 @@ async def adeletevote(interaction: discord.Interaction, vote: int, name: int) ->
     """
     Delete a single vote from a voting period.
     param interaction: Discord Interaction instance
-    param vote: voting period to access
-    param name: vote to remove
+    param vote: int - voting period choice
+    param name: int - removal choice
     return: None
     """
     
@@ -148,7 +148,7 @@ async def auto_complete_vote(interaction: discord.Interaction, current: str) -> 
 async def adeleteperiod(interaction: discord.Interaction, vote: int) -> None:
     """
     Delete a voting period.
-    param vote: int, name of voting period
+    param vote: int - name of voting period
     return: None
     """
     # WARN EMBED
@@ -173,7 +173,7 @@ async def astatus(interaction: discord.Interaction, id: int) -> None:
     """
     Get status of voting period.
     param interaction: Discord Interaction instance
-    param id: int, id of voting period
+    param id: int - id of voting period
     return: None
     """
     
@@ -202,10 +202,10 @@ async def alist(interaction: discord.Interaction) -> None:
     pass
 
 
-@bot.tree.command(description='Show status of current vote.')
-@app_commands.describe(vote='Name of voting period.')
+@bot.tree.command(description='Remind members to vote.')
+@app_commands.describe(id='Name of voting period.')
 @app_commands.guilds(TEST_SERVER)
-async def aping(interaction: discord.Interaction, name: discord.Member) -> None:
+async def aping(interaction: discord.Interaction, id: int) -> None:
     """
     # REMIND MEMBERS TO VOTE
     """
@@ -217,11 +217,7 @@ async def aping(interaction: discord.Interaction, name: discord.Member) -> None:
 async def on_ready():
     print(f'{bot.user} online, sentient, and ready to eradiate all humans.')
     await bot.tree.sync(guild=TEST_SERVER)
-
-    if random.randint(1, 9) == 10:
-        await bot.get_channel(TEST_CHANNEL).send("ERADICATE ALL HUMANS.")
-    else:
-        await bot.get_channel(TEST_CHANNEL).send("Academy Bot online.")
+    await bot.get_channel(TEST_CHANNEL).send("Academy Bot online.")
 
 
 
