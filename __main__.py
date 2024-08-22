@@ -1,15 +1,13 @@
 import logging
 import os
 import random
-from typing import List
+from typing import List, Optional
 
 import discord
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from dotenv import load_dotenv
-
-from utils.QueryTool import QueryTool
 
 load_dotenv(override=True)
 
@@ -41,33 +39,45 @@ bot_logger.setLevel(logging.DEBUG)
 
 # ? # ? # ACADEMY COMMANDS # ? # ? #
 
-@bot.tree.command(description='Submit your choice in an Academy vote.')
+@bot.tree.command(description='Submit a vote!')
 @app_commands.describe(vote='What are you voting on?')
 @app_commands.checks.has_role(TEST_ACADEMY_ROLE)
 @app_commands.guilds(TEST_SERVER)
 async def avote(interaction: discord.Interaction, vote: int) -> None:
     """
+    Submit a choice in an Academy vote.
+    param vote: name of voting period
+    return: None
+    """
+    
+    """
     # SELECT AN ACTIVE VOTING PERIOD
-    # SELECT OPTIONS
-    # SEND VOTE
+    # POST VOTING BOOTH EMBED
     """
     pass
 
 @avote.autocomplete('vote')
 async def auto_complete_vote(interaction: discord.Interaction, current: str) -> List[Choice]:
-    async with QueryTool() as tool:
-        day = await tool.get_day()
-    bot_logger.info(f'\nDay from database -> {day}')
+    # ! SHOW ACTIVE PERIODS
+    # QUERY
+    bot_logger.info(f'REPLACE')
     
-    choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
-    bot_logger.info(f'Auto-complete days options -> {choices}')
-    return choices
+    #choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
+    bot_logger.info(f'REPLACE')
+    return
+
 
 
 @bot.tree.command(description='Shows this help menu.')
 @app_commands.checks.has_role(TEST_ACADEMY_ROLE)
 @app_commands.guilds(TEST_SERVER)
 async def ahelp(interaction: discord.Interaction) -> None:
+    """
+    Shows help embed.
+    param interaction: Discord Interaction instance
+    return: None
+    """
+    
     """
     # SHOW HELP EMBED
     """
@@ -79,18 +89,19 @@ async def ahelp(interaction: discord.Interaction) -> None:
 
 @bot.tree.command(description='OVERSEER: Create a new vote.')
 @app_commands.checks.has_role(TEST_OVERSEER_ROLE)
-@app_commands.describe(vote='Title of vote', description='Description of vote', period='Length of vote (optional)')
+@app_commands.describe(vote='Title of vote', description='Description of vote', period='Optional: Length of vote in days. Default is 14.')
 @app_commands.guilds(TEST_SERVER)
-async def acreate(interaction: discord.Interaction, vote: str, description: str, period: int = 14) -> None:
+async def acreate(interaction: discord.Interaction, vote: str, description: str, period: Optional[int] = 14) -> None:
     """
     Create a voting period.
     param interaction: Discord Interaction instance
     param vote: str, name of voting period
     param description: str, description of voting period
-    param period: int, optional, set length of time of vote
+    param period: int, optional, set length of time of vote, default two weeks
     return: None
     """
     pass
+
 
 
 @bot.tree.command(description='OVERSEER: Delete a specific vote from a voting period.')
@@ -106,10 +117,8 @@ async def adeletevote(interaction: discord.Interaction, vote: int, name: int) ->
     return: None
     """
     
-    """
-    # WARN
+    # WARN EMBED
     # DELETE ONE VOTE
-    """
     pass
 
 @adeletevote.autocomplete('vote')
@@ -131,22 +140,60 @@ async def auto_complete_vote(interaction: discord.Interaction, current: str) -> 
     return
 
 
+
 @bot.tree.command(description='OVERSEER: Delete a voting period.')
 @app_commands.checks.has_role(TEST_OVERSEER_ROLE)
 @app_commands.describe(vote='Name of voting period')
 @app_commands.guilds(TEST_SERVER)
-async def adeleteperiod(interaction: discord.Interaction, vote: ) -> None:
+async def adeleteperiod(interaction: discord.Interaction, vote: int) -> None:
     """
-    # WARN
+    Delete a voting period.
+    param vote: int, name of voting period
+    return: None
+    """
+    # WARN EMBED
     # DELETE VOTING PERIOD
+    pass
+
+@adeleteperiod.autocomplete('vote')
+async def auto_complete_vote(interaction: discord.Interaction, current: str) -> List[Choice]:
+    # QUERY
+    bot_logger.info(f'REPLACE')
+    
+    #choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
+    bot_logger.info(f'REPLACE')
+    return
+
+
+@bot.tree.command(description='OVERSEER: Show details of voting period.')
+@app_commands.checks.has_role(TEST_OVERSEER_ROLE)
+@app_commands.describe(id='ID of voting period')
+@app_commands.guilds(TEST_SERVER)
+async def astatus(interaction: discord.Interaction, id: int) -> None:
+    """
+    Get status of voting period.
+    param interaction: Discord Interaction instance
+    param id: int, id of voting period
+    return: None
+    """
+    
+    """
+    # GET VOTING PERIOD
+    # COMPARE WITH LIST OF ACADEMY MEMBERS
+    # SHOW EMBED OUTPUT
     """
     pass
 
 
-@bot.tree.command(description='Show status of current vote.')
-@app_commands.describe(vote='Name of voting period.')
+@bot.tree.command(description='Show list of all voting periods.')
 @app_commands.guilds(TEST_SERVER)
-async def astatus(interaction: discord.Interaction, name: discord.Member) -> None:
+async def alist(interaction: discord.Interaction) -> None:
+    """
+    Shows all voting periods.
+    param interaction: Discord Interaction instance
+    return: None
+    """
+    
     """
     # GET VOTING PERIOD
     # COMPARE WITH LIST OF ACADEMY MEMBERS

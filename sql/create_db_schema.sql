@@ -1,12 +1,17 @@
-DROP TABLE IF EXISTS current_voting_periods;
-DROP TABLE IF EXISTS voting_period_history;
+DROP TABLE IF EXISTS current_votes;
+DROP TABLE IF EXISTS past_votes;
+
+CREATE TABLE current_votes (
+    id SERIAL PRIMARY KEY,
+    nominee VARCHAR(100),
+    members VARCHAR(100)[] NOT NULL,
+    votes JSONB NOT NULL
+);
 
 
---- BINGO TASKS
-
-CREATE TABLE tasks (
-	task_id SERIAL NOT NULL,
-    point_value INT NOT NULL,
-    task_name VARCHAR(500) NOT NULL,
-    PRIMARY KEY (task_id)
+CREATE TABLE past_votes (
+    id SERIAL PRIMARY KEY,
+    nominee VARCHAR(100),
+    members VARCHAR(100)[] NOT NULL,
+    votes JSONB NOT NULL
 );
