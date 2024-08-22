@@ -14,7 +14,8 @@ TEST_SERVER = discord.Object(id=969399636995493899)
 intents = discord.Intents.all()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="", intents=intents)
+bot = commands.Bot(command_prefix=intents=intents)
+
 
 # TODO: create list of who hasn't voted in specific vote
 # TODO: create list of who voted for what
@@ -24,8 +25,10 @@ bot = commands.Bot(command_prefix="", intents=intents)
 # TODO: reminder to vote DM command
 # IDEA: easy to use!!! help command, good descriptions
 
-# CODE
 
+
+# CODE
+"""
 @discord.app_commands.guilds(TEST_SERVER)
 class Voting(discord.app_commands.Group):
     
@@ -35,7 +38,7 @@ class Voting(discord.app_commands.Group):
         
 bot.tree.add_command(Voting())
 
-""" @bot.tree.command(description="Begin a vote for a new Academy member.")
+@bot.tree.command(description="Begin a vote for a new Academy member.")
 @discord.app_commands.describe(nominee="Name of the nominee.", comments="Do you want to enable comments for this vote?")
 async def vote(interaction: discord.Interaction, nominee: discord.Member, comments: str):
     
@@ -44,13 +47,14 @@ async def vote(interaction: discord.Interaction, nominee: discord.Member, commen
 @bot.event
 async def on_ready():
     print(f'{bot.user} online, sentient, and ready to eradiate all humans.')
+    await bot.tree.sync(guild=TEST_SERVER)
     
     if random.randint(1,10) == 10:
         await bot.get_channel(TEST_CHANNEL).send("ERADICATE ALL HUMANS.")
     else:
         await bot.get_channel(TEST_CHANNEL).send("Academy Bot online.")
 
-@bot.tree.command(description="Ping?")
+@bot.tree.command(name="ping", description="Ping?")
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message("Pong!", ephemeral=True)
 
