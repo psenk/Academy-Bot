@@ -1,5 +1,7 @@
 import logging
 
+from utils import Constants
+
 
 def create_logger(filename: str) -> logging.Logger:
     logger = logging.getLogger(filename)
@@ -10,3 +12,10 @@ def create_logger(filename: str) -> logging.Logger:
         logger.addHandler(handler)
         logger.setLevel(logging.DEBUG)
     return logger
+
+
+def get_current_overseer() -> str:
+    guild = Constants.TEST_SERVER
+    overseer_role = guild.get_role(Constants.TEST_OVERSEER_ROLE)
+    overseer = overseer_role.members[0]
+    return overseer    
