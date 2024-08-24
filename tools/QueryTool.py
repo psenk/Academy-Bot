@@ -9,17 +9,16 @@ from utils import Functions
 
 load_dotenv(override=True)
 
-CONNECTION_STRING = os.getenv('PG_CONNECTION_STRING')
+#CONNECTION_STRING = os.getenv('PG_CONNECTION_STRING')
+CONNECTION_STRING = "postgresql://postgres:postgres@localhost:5432/academy-test"
 
 """
 JSON VOTE OBJECT
 {
-    "vote": {
-        "name": "Kyanize",
-        "vote": true,
-        "comments": "blah blah blah",
-        "timestamp": 05-05-2015T05:05:05PM
-    }
+    "name": "Kyanize",
+    "vote": true,
+    "comments": "blah blah blah",
+    "timestamp": "05-05-2015T05:05:05PM"
 }
 """
 
@@ -101,15 +100,52 @@ class QueryTool:
     async def submit_vote(self) -> None:
         pass
 
-    async def get_voting_period(self) -> list:
-        pass
+    async def get_current_voting_period(self, id) -> list:
+        """
+        Get specific current voting period.
+        return: list containing single voting period
+        """
+        query = "SELECT * FROM current_votes WHERE id = $1;"
+        voting_period = await self.fetch(query, id)
+        self.logger.info('Single current voting period retrieved.')
+        return voting_period
+    
+    async def get_past_voting_period(self, id) -> list:
+        """
+        Get specific past voting period.
+        return: list containing single voting period
+        """
+        query = "SELECT * FROM past_votes WHERE id = $1;"
+        voting_period = await self.fetch(query, id)
+        self.logger.info('Single past voting period retrieved.')
+        return voting_period
+    
+    async def get_all_current_voting_periods(self) -> list:
+        """
+        Get all current voting periods.
+        return: list of voting periods
+        """
+        query = "SELECT * FROM current_votes;"
+        voting_periods = await self.fetch(query)
+        self.logger.info('All current voting periods retrieved.')
+        return voting_periods
+    
+    async def get_all_past_voting_periods(self) -> list:
+        """
+        Get all past voting periods.
+        return: list of voting periods
+        """
+        query = "SELECT * FROM past_votes;"
+        voting_periods = await self.fetch(query)
+        self.logger.info('All past voting periods retrieved.')
+        return voting_periods
     
     async def get_vote(self) -> list:
         pass
 
-    async def delete_voting_period(self, id: int) -> None:
+    async def delete_current_voting_period(self, id: int) -> None:
         """
-        Delete voting period from database.
+        Delete current voting period from database.  Past must be deleted manually.
         param id: int - id # of task
         return: None
         """
