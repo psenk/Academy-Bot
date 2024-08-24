@@ -41,25 +41,28 @@ bot_logger.setLevel(logging.DEBUG)
 @app_commands.describe(vote='What are you voting on?')
 @app_commands.checks.has_role(Constants.TEST_ACADEMY_ROLE)
 @app_commands.guilds(Constants.TEST_SERVER)
-async def avote(interaction: discord.Interaction, vote: int) -> None:
+async def avote(interaction: discord.Interaction, vote: int = 1) -> None:
     """
     Submit a choice in an Academy vote.
     param vote: int - choice of voting period
     return: None
     """
     # GET OVERSEER
-    overseer = Functions.get_current_overseer()
+    await interaction.response.defer()
+    overseer = Functions.get_current_overseer(interaction.guild)
+    
     # GET VOTE ID FROM AUTOCOMPLETE
     
     # GET VOTE PERIOD FROM DB WITH VOTE ID
     
     # DISPLAY VOTING BOOTH
-    voting_booth = VotingBooth(overseer)
+    voting_booth = VotingBooth(interaction, overseer)
     await voting_booth.create_voting_booth_embed()
     
-    return
+    bot_logger.info(f'/avote used by -> {interaction.user.display_name}')
 
-@avote.autocomplete('vote')
+
+""" @avote.autocomplete('vote')
 async def auto_complete_vote(interaction: discord.Interaction, current: str) -> List[Choice]:
     # ! SHOW ACTIVE PERIODS
     # QUERY
@@ -67,11 +70,11 @@ async def auto_complete_vote(interaction: discord.Interaction, current: str) -> 
     
     #choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
     bot_logger.info(f'REPLACE')
-    return
+    return """
 
 
 
-@bot.tree.command(description='Shows this help menu.')
+@bot.tree.command(description='Shows extensive help menu.')
 @app_commands.checks.has_role(Constants.TEST_ACADEMY_ROLE)
 @app_commands.guilds(Constants.TEST_SERVER)
 async def ahelp(interaction: discord.Interaction) -> None:
@@ -205,7 +208,7 @@ async def alist(interaction: discord.Interaction) -> None:
     pass
 
 
-@bot.tree.command(description='Remind members to vote.')
+@bot.tree.command(description='OVERSEER: Remind members to vote.')
 @app_commands.describe(id='Name of voting period.')
 @app_commands.guilds(Constants.TEST_SERVER)
 async def aping(interaction: discord.Interaction, id: int) -> None:

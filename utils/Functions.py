@@ -1,4 +1,5 @@
 import logging
+import discord
 
 from utils import Constants
 
@@ -14,8 +15,7 @@ def create_logger(filename: str) -> logging.Logger:
     return logger
 
 
-def get_current_overseer() -> str:
-    guild = Constants.TEST_SERVER
+def get_current_overseer(guild: discord.Guild) -> str:
     overseer_role = guild.get_role(Constants.TEST_OVERSEER_ROLE)
-    overseer = overseer_role.members[0]
-    return overseer    
+    overseer = overseer_role.members[0].display_name
+    return overseer

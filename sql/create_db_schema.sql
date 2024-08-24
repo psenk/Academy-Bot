@@ -8,7 +8,6 @@ CREATE TABLE current_votes (
     votes JSONB[] NOT NULL
 );
 
-
 CREATE TABLE past_votes (
     id SERIAL PRIMARY KEY,
     nominee VARCHAR(100),
