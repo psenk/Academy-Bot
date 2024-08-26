@@ -6,8 +6,8 @@ CREATE TABLE active_voting_periods (
     title VARCHAR(500) NOT NULL,
     nominee VARCHAR(100),
     comments VARCHAR(1000),
-    members VARCHAR(100)[] NOT NULL,
-	voted VARCHAR(100)[],
+    member_ids BIGINT[] NOT NULL,
+	voted_ids BIGINT[],
     votes JSONB[],
 	start_date TIMESTAMP NOT NULL,
 	length INT NOT NULL
@@ -18,8 +18,8 @@ CREATE TABLE past_voting_periods (
     title VARCHAR(500),
     nominee VARCHAR(100),
     comments VARCHAR(1000),
-    members VARCHAR(100)[] NOT NULL,
-	voted VARCHAR(100)[],
+    member_ids BIGINT[] NOT NULL,
+	voted_ids BIGINT[],
     votes JSONB NOT NULL,
 	start_date TIMESTAMP NOT NULL,
 	length INT NOT NULL
