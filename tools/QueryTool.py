@@ -1,6 +1,6 @@
 import json
 import os
-import datetime as datetime
+from datetime import datetime
 
 import asyncpg
 from dotenv import load_dotenv
@@ -15,7 +15,10 @@ CONNECTION_STRING = "postgresql://postgres:postgres@localhost:5432/academy-test"
 """
 JSON VOTE OBJECT
 {
-    "name": "Kyanize",
+    "name": {
+        "user": "Kyanize",
+        "id": 912674589162518623
+    },
     "vote": true,
     "comments": "blah blah blah",
     "timestamp": "05-05-2015T05:05:05PM"
@@ -94,11 +97,11 @@ class QueryTool:
             self.logger.error(f'Error fetching value -> {e}', exc_info=True)
             raise
 
-    async def create_voting_period(self, title: str, nominee: str, comments: str, members: list, length: int = 7) -> None:
+    async def create_voting_period(self, title: str, nominee: str, comments: str, members: list, length: int) -> None:
         """
         
         """        
-        query = 'INSERT INTO active_voting_periods (title, nominee, comments, members, voted, votes, start_date, length) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);'
+        query = 'INSERT INTO active_voting_periods (title, nominee, comments, member_ids, voted_ids, votes, start_date, length) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);'
         self.logger.info(f'Create voting period query -> {query}')
         await self.execute(query, title, nominee, comments, members, [], [], datetime.now(), length)
 
@@ -169,6 +172,8 @@ class QueryTool:
         self.logger.info(f'--JSON -> {vote}')
         self.logger.info(f'--ID number -> {id}')
         await self.execute(query, vote, id)
+        data = json.loads(vote)
+        await self.update_voted(id, data['name']['id'])
         self.logger.info('Vote submitted.')
 
     async def delete_vote(self, id: int, name: str) -> None:
@@ -195,3 +200,10 @@ class QueryTool:
         await self.execute(query, id, name)
         self.logger.info('Vote deleted.')
 
+    async def update_voted(self, member_id: int, period_id: int):
+        query = 'UPDATE active_voting_periods SET voted = voted || $1 WHERE id = $2;'
+        self.logger.info(f'Update voted query -> {query}')
+        self.logger.info(f'--member id -> {member_id}')
+        self.logger.info(f'--period id -> {period_id}')
+        await self.execute(query, member_id, period_id)
+        self.logger.info('Voted list updated.')

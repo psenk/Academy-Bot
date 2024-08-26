@@ -62,15 +62,15 @@ async def avote(interaction: discord.Interaction, vote: int) -> None:
     voting_booth = VotingBooth(bot, interaction, overseer, period)
     await voting_booth.create()
     await bot.wait_for('reaction_add', check=lambda react, user: user == bot.user and react.message.channel == interaction.channel, timeout=70.0)
-    bot_logger.info(f'/avote used by -> {interaction.user.display_name}')
+    bot_logger.info(f'/avote command used by -> {interaction.user.display_name}')
 
 @avote.autocomplete('vote')
 async def auto_complete_vote(interaction: discord.Interaction, current: str) -> List[Choice]:
     async with QueryTool() as tool:
         periods = await tool.get_all_current_voting_periods()
-    bot_logger.info(f'Auto complete vote periods -> {periods}')
+    bot_logger.info(f'/avote auto complete, periods -> {periods}')
     choices = [Choice(name=period['title'], value=period['id']) for period in periods]        
-    bot_logger.info(f'Auto complete choices -> {choices}')
+    bot_logger.info(f'/avote auto complete, choices -> {choices}')
     return choices[:25]
 
 
@@ -97,21 +97,26 @@ async def ahelp(interaction: discord.Interaction) -> None:
 @app_commands.checks.has_role(Constants.TEST_OVERSEER_ROLE)
 @app_commands.describe(title='Title of voting period.', comments='Comments you\'d like to attach to the vote.', nominee='Optional: Vote nominee', length='Optional: Length of vote (days, default = 7).')
 @app_commands.guilds(Constants.TEST_SERVER)
-async def acreate(interaction: discord.Interaction, title: str, comments: str, nominee: Optional[discord.Member] , length: Optional[int]) -> None:
+async def acreate(interaction: discord.Interaction, title: str, comments: str, nominee: Optional[discord.Member] , length: Optional[int] = 7) -> None:
     """
     Create a voting period.
     param interaction: Discord Interaction instance
     param title: str - name of voting period
     param comments: str - description of voting period
-    param nominee: Discord Member instance
+    param nominee: optional, Discord Member instance
     param length: int - optional, set length of time of vote, default two weeks
     return: None
     """
     await interaction.response.defer()
-    members = interaction.guild.get_role(Constants.TEST_ACADEMY_ROLE).members
+    members = [member.id for member in interaction.guild.get_role(Constants.TEST_ACADEMY_ROLE).members]
+    user = nominee.display_name if nominee else interaction.user.display_name
     
     async with QueryTool() as tool:
-        await tool.create_voting_period(title, nominee.display_name, comments, members, length)
+        await tool.create_voting_period(title, user, comments, members, length)
+    message = await interaction.followup.send("Your voting period has been created!")
+    await message.delete(delay=10.0)
+    bot_logger.info(f'/acreate command used by -> {interaction.user.display_name}')
+
 
 
 @bot.tree.command(description='OVERSEER: Delete a specific vote from a voting period.')
@@ -177,9 +182,10 @@ async def auto_complete_vote(interaction: discord.Interaction, current: str) -> 
     return
 
 
+
 @bot.tree.command(description='OVERSEER: Show details of voting period.')
 @app_commands.checks.has_role(Constants.TEST_OVERSEER_ROLE)
-@app_commands.describe(id='ID of voting period')
+@app_commands.describe(id='Name of voting period')
 @app_commands.guilds(Constants.TEST_SERVER)
 async def astatus(interaction: discord.Interaction, id: int) -> None:
     """
@@ -188,13 +194,23 @@ async def astatus(interaction: discord.Interaction, id: int) -> None:
     param id: int - id of voting period
     return: None
     """
-
-    """
+    
     # GET VOTING PERIOD
+    async with QueryTool() as tool:
+        period = tool.get_current_voting_period(id)
+    
     # COMPARE WITH LIST OF ACADEMY MEMBERS
     # SHOW EMBED OUTPUT
-    """
-    pass
+
+
+@astatus.autocomplete('id')
+async def auto_complete_vote(interaction: discord.Interaction, current: str) -> List[Choice]:
+    async with QueryTool() as tool:
+        periods = await tool.get_all_current_voting_periods()
+    bot_logger.info(f'/astatus auto complete, periods -> {periods}')
+    choices = [Choice(name=period['title'], value=period['id']) for period in periods]        
+    bot_logger.info(f'/astatus auto complete, choices -> {choices}')
+    return choices[:25]
 
 
 @bot.tree.command(description='Show list of all voting periods.')
