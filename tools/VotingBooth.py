@@ -8,6 +8,18 @@ from utils import Functions
 
 CHARACTER_LIMIT = 500
 
+"""
+JSON VOTE OBJECT
+{
+    "name": {
+        "user": "Kyanize",
+        "id": 912674589162518623
+    },
+    "vote": true,
+    "comments": "blah blah blah",
+    "timestamp": "05-05-2015T05:05:05PM"
+}
+"""
 
 class VotingBooth(discord.ui.View):
 
@@ -24,7 +36,10 @@ class VotingBooth(discord.ui.View):
         self.id = period[0]
         self.message: discord.Message = None
         self.vote = {
-            'name': f'{interaction.user.display_name}'
+            'name': {
+                'user': f'{interaction.user.display_name}',
+                'id': interaction.user.id
+            }
         }
 
         # ! HAS VOTED??
@@ -111,7 +126,6 @@ class VotingBooth(discord.ui.View):
 
     async def submit(self):
         vote = json.dumps(self.vote)
-        print(vote)
         async with QueryTool() as tool:
            await tool.submit_vote(vote, self.id)
         self.logger.info(f'Vote submitted to database -> {vote}')
