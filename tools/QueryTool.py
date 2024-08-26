@@ -140,7 +140,7 @@ class QueryTool:
         Get all past voting periods.
         return: list of voting periods
         """
-        query = 'SELECT * FROM past_votes;'
+        query = 'SELECT * FROM past_voting_periods;'
         voting_periods = await self.fetch(query)
         self.logger.info('All past voting periods retrieved.')
         return voting_periods
@@ -173,7 +173,7 @@ class QueryTool:
         self.logger.info(f'--ID number -> {id}')
         await self.execute(query, vote, id)
         data = json.loads(vote)
-        await self.update_voted(id, data['name']['id'])
+        await self.update_voted(data['name']['id'], id)
         self.logger.info('Vote submitted.')
 
     async def delete_vote(self, id: int, name: str) -> None:
@@ -200,10 +200,26 @@ class QueryTool:
         await self.execute(query, id, name)
         self.logger.info('Vote deleted.')
 
-    async def update_voted(self, member_id: int, period_id: int):
-        query = 'UPDATE active_voting_periods SET voted = voted || $1 WHERE id = $2;'
+    async def update_voted(self, member_id: int, period_id: int) -> None:
+        """
+        Adds voter id to voted list.
+        param member_id: int, id number of member
+        param period_id: int, id of voting period
+        return: None
+        """
+        query = 'UPDATE active_voting_periods SET voted_ids = voted_ids || $1::BIGINT[] WHERE id = $2;'
         self.logger.info(f'Update voted query -> {query}')
-        self.logger.info(f'--member id -> {member_id}')
-        self.logger.info(f'--period id -> {period_id}')
-        await self.execute(query, member_id, period_id)
+        self.logger.info(f'--Member ID -> {member_id}')
+        self.logger.info(f'--Period ID -> {period_id}')
+        await self.execute(query, [member_id], period_id)
         self.logger.info('Voted list updated.')
+        
+    async def get_voted(self, id: int) -> list:
+        """
+        Gets list of voters from period.
+        param id: int, id of voting period
+        return: list of voters
+        """
+        query = 'SELECT voted FROM active_voting_periods WHERE id = $1;'
+        self.logger.info(f'Update voted query -> {query}')
+        self.logger.info(f'--ID -> {id}')

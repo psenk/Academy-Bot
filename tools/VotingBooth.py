@@ -33,8 +33,8 @@ class VotingBooth(discord.ui.View):
         self.interaction = interaction
         self.overseer = overseer
         self.period = period
+        self.message = None
         self.id = period[0]
-        self.message: discord.Message = None
         self.vote = {
             'name': {
                 'user': f'{interaction.user.display_name}',
@@ -51,11 +51,10 @@ class VotingBooth(discord.ui.View):
         return: None
         """
 
-        img = discord.File("pics\\avatar.jpg")
         voting_booth = discord.Embed(
             title="Voting Booth", color=0xFF0000, description="Submit your vote below!  Comments may be provided after vote has been submitted."
         )
-        voting_booth.set_thumbnail(url='attachment://avatar.jpg')
+        voting_booth.set_thumbnail(url='https://cdn.discordapp.com/attachments/1195577008973946890/1277735289640714352/avatar.jpg?ex=66ce3f38&is=66ccedb8&hm=639e0a60877bc5276b4ede128a188368a116df66d23d6191d4392be9e3b35441&')
         voting_booth.set_author(name=f'Sith Overseer: {self.overseer}')
         voting_booth.add_field(
             name='Title', value=f'{self.period["title"]}', inline=True)
@@ -64,7 +63,7 @@ class VotingBooth(discord.ui.View):
         voting_booth.add_field(name='', value='', inline=True)
         voting_booth.add_field(name='Overseer Comments',
                                value=f'{self.period["comments"]}', inline=True)
-        self.message = await self.interaction.followup.send(embed=voting_booth, view=self, file=img, ephemeral=True)
+        self.message = await self.interaction.followup.send(embed=voting_booth, view=self, ephemeral=True)
         self.logger.info(f'Voting booth embed posted for -> {self.interaction.user.display_name}')
 
     @discord.ui.button(label="Approve", emoji="👍", style=discord.ButtonStyle.green)
@@ -129,6 +128,5 @@ class VotingBooth(discord.ui.View):
         async with QueryTool() as tool:
            await tool.submit_vote(vote, self.id)
         self.logger.info(f'Vote submitted to database -> {vote}')
-        response = await self.interaction.followup.send("Your vote has been submitted!")
-        await response.add_reaction('✅')
+        response = await self.message.channel.send("Your vote has been submitted!")
         await response.delete(delay=10.0)
