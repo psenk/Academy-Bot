@@ -1,6 +1,6 @@
-import uuid
+import json
 import os
-from datetime import datetime
+import datetime as datetime
 
 import asyncpg
 from dotenv import load_dotenv
@@ -94,18 +94,20 @@ class QueryTool:
             self.logger.error(f'Error fetching value -> {e}', exc_info=True)
             raise
 
-    async def create_voting_period(self) -> None:
-        pass
-    
-    async def submit_vote(self) -> None:
-        pass
+    async def create_voting_period(self, title: str, nominee: str, comments: str, members: list, length: int = 7) -> None:
+        """
+        
+        """        
+        query = 'INSERT INTO active_voting_periods (title, nominee, comments, members, voted, votes, start_date, length) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);'
+        self.logger.info(f'Create voting period query -> {query}')
+        await self.execute(query, title, nominee, comments, members, [], [], datetime.now(), length)
 
     async def get_current_voting_period(self, id) -> list:
         """
         Get specific current voting period.
         return: list containing single voting period
         """
-        query = "SELECT * FROM current_votes WHERE id = $1;"
+        query ='SELECT * FROM active_voting_periods WHERE id = $1;'
         voting_period = await self.fetch(query, id)
         self.logger.info('Single current voting period retrieved.')
         return voting_period
@@ -115,7 +117,7 @@ class QueryTool:
         Get specific past voting period.
         return: list containing single voting period
         """
-        query = "SELECT * FROM past_votes WHERE id = $1;"
+        query = 'SELECT * FROM past_votes WHERE id = $1;'
         voting_period = await self.fetch(query, id)
         self.logger.info('Single past voting period retrieved.')
         return voting_period
@@ -125,7 +127,7 @@ class QueryTool:
         Get all current voting periods.
         return: list of voting periods
         """
-        query = "SELECT * FROM current_votes;"
+        query = 'SELECT * FROM active_voting_periods;'
         voting_periods = await self.fetch(query)
         self.logger.info('All current voting periods retrieved.')
         return voting_periods
@@ -135,7 +137,7 @@ class QueryTool:
         Get all past voting periods.
         return: list of voting periods
         """
-        query = "SELECT * FROM past_votes;"
+        query = 'SELECT * FROM past_votes;'
         voting_periods = await self.fetch(query)
         self.logger.info('All past voting periods retrieved.')
         return voting_periods
@@ -146,34 +148,50 @@ class QueryTool:
     async def delete_current_voting_period(self, id: int) -> None:
         """
         Delete current voting period from database.  Past must be deleted manually.
-        param id: int - id # of task
+        param id: int - id # of period
         return: None
         """
-        query = 'DELETE FROM current_votes WHERE id = $1;'
+        query = 'DELETE FROM active_voting_periods WHERE id = $1;'
         self.logger.info(f'Delete voting period query -> {query}')
         self.logger.info(f'--ID number -> {id}')
         await self.execute(query, id)
         self.logger.info('Voting period deleted.')
 
+    async def submit_vote(self, vote: json, id: int) -> None:
+        """
+        Submit vote to specific period in database.
+        param vote: json - vote object
+        param id: int - id # of period
+        return: None
+        """
+        query = 'UPDATE active_voting_periods SET votes = votes || $1::jsonb WHERE id = $2;'
+        self.logger.info(f'Submit vote query -> {query}')
+        self.logger.info(f'--JSON -> {vote}')
+        self.logger.info(f'--ID number -> {id}')
+        await self.execute(query, vote, id)
+        self.logger.info('Vote submitted.')
+
     async def delete_vote(self, id: int, name: str) -> None:
         """
         Deletes specific vote.
         param id: int - id # of period
+        param name: str - name of voter
         return: None
         """
         query = """
         WITH updated_votes AS (
             SELECT id, array_remove(votes, elem) AS new_votes
-            FROM current_votes, unnest(votes) AS elem
+            FROM active_voting_periods, unnest(votes) AS elem
             WHERE id = $1 AND elem->'vote'->>'name' = $2
             )
-        UPDATE current_votes
+        UPDATE active_voting_periods
         SET votes = updated_votes.new_votes
         FROM updated_votes
-        WHERE current_votes.id = updated_votes.id;
+        WHERE active_voting_periods.id = updated_votes.id;
         """
         self.logger.info(f'Delete vote query -> {query}')
         self.logger.info(f'--ID number -> {id}')
         self.logger.info(f'--Name -> {name}')
         await self.execute(query, id, name)
         self.logger.info('Vote deleted.')
+

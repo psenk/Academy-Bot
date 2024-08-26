@@ -1,6 +1,5 @@
 import logging
 import os
-import random
 from typing import List, Optional
 
 import discord
@@ -9,6 +8,7 @@ from discord.app_commands import Choice
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from tools.QueryTool import QueryTool
 from utils import Constants, Functions
 from tools.VotingBooth import VotingBooth
 
@@ -38,40 +38,40 @@ bot_logger.setLevel(logging.DEBUG)
 # ? # ? # ACADEMY COMMANDS # ? # ? #
 
 @bot.tree.command(description='Submit a vote!')
-@app_commands.describe(vote='What are you voting on?')
+@app_commands.describe(vote='What do you want to vote on?')
 @app_commands.checks.has_role(Constants.TEST_ACADEMY_ROLE)
 @app_commands.guilds(Constants.TEST_SERVER)
-async def avote(interaction: discord.Interaction, vote: int = 1) -> None:
+async def avote(interaction: discord.Interaction, vote: int) -> None:
     """
     Submit a choice in an Academy vote.
-    param vote: int - choice of voting period
+    param interaction - Discord Interactioninstance
+    param vote: int - Choice, voting period
     return: None
     """
-    # GET OVERSEER
     await interaction.response.defer()
     overseer = Functions.get_current_overseer(interaction.guild)
-    
-    # GET VOTE ID FROM AUTOCOMPLETE
-    
+    bot_logger.info(f'Current overseer -> {overseer}')
+
     # GET VOTE PERIOD FROM DB WITH VOTE ID
+    async with QueryTool() as tool:
+        periods = await tool.get_current_voting_period(vote)
+    period = periods[0]
+    bot_logger.info(f'Voting period from database -> {period[:4]}') # slicing off irrelevant data
     
     # DISPLAY VOTING BOOTH
-    voting_booth = VotingBooth(interaction, overseer)
-    await voting_booth.create_voting_booth_embed()
-    
+    voting_booth = VotingBooth(bot, interaction, overseer, period)
+    await voting_booth.create()
+    await bot.wait_for('reaction_add', check=lambda react, user: user == bot.user and react.message.channel == interaction.channel, timeout=70.0)
     bot_logger.info(f'/avote used by -> {interaction.user.display_name}')
 
-
-""" @avote.autocomplete('vote')
+@avote.autocomplete('vote')
 async def auto_complete_vote(interaction: discord.Interaction, current: str) -> List[Choice]:
-    # ! SHOW ACTIVE PERIODS
-    # QUERY
-    bot_logger.info(f'REPLACE')
-    
-    #choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
-    bot_logger.info(f'REPLACE')
-    return """
-
+    async with QueryTool() as tool:
+        periods = await tool.get_all_current_voting_periods()
+    bot_logger.info(f'Auto complete vote periods -> {periods}')
+    choices = [Choice(name=period['title'], value=period['id']) for period in periods]        
+    bot_logger.info(f'Auto complete choices -> {choices}')
+    return choices[:25]
 
 
 @bot.tree.command(description='Shows extensive help menu.')
@@ -83,7 +83,7 @@ async def ahelp(interaction: discord.Interaction) -> None:
     param interaction: Discord Interaction instance
     return: None
     """
-    
+
     """
     # SHOW HELP EMBED
     """
@@ -95,19 +95,23 @@ async def ahelp(interaction: discord.Interaction) -> None:
 
 @bot.tree.command(description='OVERSEER: Create a new vote.')
 @app_commands.checks.has_role(Constants.TEST_OVERSEER_ROLE)
-@app_commands.describe(vote='Title of vote', description='Description of vote', period='Optional: Length of vote in days. Default is 14.')
+@app_commands.describe(title='Title of voting period.', comments='Comments you\'d like to attach to the vote.', nominee='Optional: Vote nominee', length='Optional: Length of vote (days, default = 7).')
 @app_commands.guilds(Constants.TEST_SERVER)
-async def acreate(interaction: discord.Interaction, vote: str, description: str, period: Optional[int] = 14) -> None:
+async def acreate(interaction: discord.Interaction, title: str, comments: str, nominee: Optional[discord.Member] , length: Optional[int]) -> None:
     """
     Create a voting period.
     param interaction: Discord Interaction instance
-    param vote: str - name of voting period
-    param description: str - description of voting period
-    param period: int - optional, set length of time of vote, default two weeks
+    param title: str - name of voting period
+    param comments: str - description of voting period
+    param nominee: Discord Member instance
+    param length: int - optional, set length of time of vote, default two weeks
     return: None
     """
-    pass
-
+    await interaction.response.defer()
+    members = interaction.guild.get_role(Constants.TEST_ACADEMY_ROLE).members
+    
+    async with QueryTool() as tool:
+        await tool.create_voting_period(title, nominee.display_name, comments, members, length)
 
 
 @bot.tree.command(description='OVERSEER: Delete a specific vote from a voting period.')
@@ -122,29 +126,30 @@ async def adeletevote(interaction: discord.Interaction, vote: int, name: int) ->
     param name: int - removal choice
     return: None
     """
-    
+
     # WARN EMBED
     # DELETE ONE VOTE
     pass
+
 
 @adeletevote.autocomplete('vote')
 async def auto_complete_vote(interaction: discord.Interaction, current: str) -> List[Choice]:
     # QUERY
     bot_logger.info(f'REPLACE')
-    
-    #choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
+
+    # choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
     bot_logger.info(f'REPLACE')
     return
+
 
 @adeletevote.autocomplete('name')
 async def auto_complete_vote(interaction: discord.Interaction, current: str) -> List[Choice]:
     # QUERY
     bot_logger.info(f'REPLACE')
-    
-    #choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
+
+    # choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
     bot_logger.info(f'REPLACE')
     return
-
 
 
 @bot.tree.command(description='OVERSEER: Delete a voting period.')
@@ -161,12 +166,13 @@ async def adeleteperiod(interaction: discord.Interaction, vote: int) -> None:
     # DELETE VOTING PERIOD
     pass
 
+
 @adeleteperiod.autocomplete('vote')
 async def auto_complete_vote(interaction: discord.Interaction, current: str) -> List[Choice]:
     # QUERY
     bot_logger.info(f'REPLACE')
-    
-    #choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
+
+    # choices = [choice for choice in Choices.DAY_AND_BOARD if choice.value <= day]
     bot_logger.info(f'REPLACE')
     return
 
@@ -182,7 +188,7 @@ async def astatus(interaction: discord.Interaction, id: int) -> None:
     param id: int - id of voting period
     return: None
     """
-    
+
     """
     # GET VOTING PERIOD
     # COMPARE WITH LIST OF ACADEMY MEMBERS
@@ -199,7 +205,7 @@ async def alist(interaction: discord.Interaction) -> None:
     param interaction: Discord Interaction instance
     return: None
     """
-    
+
     """
     # GET VOTING PERIOD
     # COMPARE WITH LIST OF ACADEMY MEMBERS
@@ -218,13 +224,11 @@ async def aping(interaction: discord.Interaction, id: int) -> None:
     pass
 
 
-
 @bot.event
 async def on_ready():
     print(f'{bot.user} online, sentient, and ready to eradiate all humans.')
     await bot.tree.sync(guild=Constants.TEST_SERVER)
     await bot.get_channel(Constants.TEST_ACADEMY_CHANNEL).send("Academy Bot online.")
-
 
 
 bot.run(DISCORD_TOKEN, log_handler=logging.FileHandler(
